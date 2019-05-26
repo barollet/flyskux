@@ -2,6 +2,8 @@ use winit::{Event, EventsLoop, WindowEvent};
 
 #[macro_use]
 extern crate vulkano;
+#[macro_use]
+extern crate lazy_static;
 
 mod engine;
 

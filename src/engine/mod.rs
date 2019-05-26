@@ -3,19 +3,25 @@
 // Initialize Vulkan instance, device and swapchain
 // The main window is initialized with the swapchain creation
 
+mod rendering;
+mod shaders;
+
 use std::sync::Arc;
 
+use vulkano_win::VkSurfaceBuild;
 use winit::dpi::LogicalSize;
 use winit::{EventsLoop, Window, WindowBuilder};
-use vulkano_win::VkSurfaceBuild;
 
 use vulkano::device::Device;
 use vulkano::device::Queue;
 use vulkano::instance::Instance;
 use vulkano::instance::PhysicalDevice;
-
+use vulkano::framebuffer::RenderPassAbstract;
+use vulkano::pipeline::GraphicsPipelineAbstract;
 use vulkano::image::swapchain::SwapchainImage;
 use vulkano::swapchain::{PresentMode, SurfaceTransform, Swapchain};
+
+use rendering::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -26,6 +32,8 @@ pub struct Engine {
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
     images: Vec<Arc<SwapchainImage<Window>>>,
+    render_pass: Arc<RenderPassAbstract>,
+    graphical_pipeline: Arc<GraphicsPipelineAbstract>,
 }
 
 impl Engine {
@@ -35,12 +43,19 @@ impl Engine {
         let (device, queue) = init_device(instance.clone());
         let (swapchain, images) =
             init_swapchain(instance.clone(), device.clone(), queue.clone(), events_loop);
+
+        // Initialiazing the render pass
+        let render_pass = init_render_pass(device.clone(), swapchain.clone());
+        let graphical_pipeline = init_graphical_pipeline(device.clone(), render_pass.clone());
+
         Self {
             instance,
             device,
             queue,
             swapchain,
             images,
+            render_pass,
+            graphical_pipeline,
         }
     }
 }
