@@ -1,0 +1,7 @@
+[package]
+name = "flyskux"
+version = "0.1.0"
+authors = ["theo barollet <theo.barollet@grenoble-inp.org>"]
+edition = "2018"
+
+[dependencies]
