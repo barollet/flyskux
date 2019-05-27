@@ -23,7 +23,7 @@ use vulkano::instance::PhysicalDevice;
 use vulkano::pipeline::GraphicsPipelineAbstract;
 use vulkano::swapchain::{PresentMode, SurfaceTransform, Swapchain};
 
-use primitives::*;
+pub use primitives::*;
 use rendering::*;
 
 const WIDTH: u32 = 800;
@@ -37,25 +37,6 @@ pub struct Engine {
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     dynamic_state: DynamicState,
     renderables: Vec<Triangle>,
-}
-
-impl Engine {
-    pub fn push_triangle(&mut self) {
-        self.renderables.push(Triangle::from_vertices(
-            self.device.clone(),
-            [
-                Vertex {
-                    position: [-0.5, -0.25],
-                },
-                Vertex {
-                    position: [0.0, 0.5],
-                },
-                Vertex {
-                    position: [0.25, -0.1],
-                },
-            ],
-        ));
-    }
 }
 
 impl Engine {
