@@ -10,11 +10,6 @@ pub struct Shaders {
 */
 
 // For now we have to load all the shaders by hand
-
-use std::sync::Arc;
-
-use vulkano::device::Device;
-
 pub mod basic_triangle_vert {
     vulkano_shaders::shader! {
         ty: "vertex",
