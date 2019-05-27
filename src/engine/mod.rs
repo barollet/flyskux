@@ -3,8 +3,8 @@
 // Initialize Vulkan instance, device and swapchain
 // The main window is initialized with the swapchain creation
 
-pub mod rendering;
 mod primitives;
+pub mod rendering;
 mod shaders;
 
 use std::sync::Arc;
@@ -17,48 +17,44 @@ use vulkano::command_buffer::DynamicState;
 use vulkano::device::Device;
 use vulkano::device::Queue;
 use vulkano::framebuffer::FramebufferAbstract;
-use vulkano::framebuffer::RenderPassAbstract;
 use vulkano::image::swapchain::SwapchainImage;
 use vulkano::instance::Instance;
 use vulkano::instance::PhysicalDevice;
 use vulkano::pipeline::GraphicsPipelineAbstract;
 use vulkano::swapchain::{PresentMode, SurfaceTransform, Swapchain};
-use vulkano::sync;
-use vulkano::sync::GpuFuture;
 
-use rendering::*;
 use primitives::*;
+use rendering::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
 pub struct Engine {
-    instance: Arc<Instance>,
     device: Arc<Device>,
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
-    images: Vec<Arc<SwapchainImage<Window>>>,
-    render_pass: Arc<RenderPassAbstract + Send + Sync>,
     graphical_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     dynamic_state: DynamicState,
-    previous_frame_end: Box<GpuFuture>,
     renderables: Vec<Triangle>,
 }
 
 impl Engine {
     pub fn push_triangle(&mut self) {
-        self.renderables.push(Triangle::from_vertices(self.device.clone(), [
-            Vertex {
-                position: [-0.5, -0.25],
-            },
-            Vertex {
-                position: [0.0, 0.5],
-            },
-            Vertex {
-                position: [0.25, -0.1],
-            },
-        ]));
+        self.renderables.push(Triangle::from_vertices(
+            self.device.clone(),
+            [
+                Vertex {
+                    position: [-0.5, -0.25],
+                },
+                Vertex {
+                    position: [0.0, 0.5],
+                },
+                Vertex {
+                    position: [0.25, -0.1],
+                },
+            ],
+        ));
     }
 }
 
@@ -80,19 +76,14 @@ impl Engine {
             scissors: None,
         };
         let framebuffers = init_framebuffers(&images, render_pass.clone(), &mut dynamic_state);
-        let previous_frame_end = Box::new(sync::now(device.clone()));
 
         Self {
-            instance,
             device,
             queue,
             swapchain,
-            images,
-            render_pass,
             graphical_pipeline,
             framebuffers,
             dynamic_state,
-            previous_frame_end,
             renderables: vec![],
         }
     }

@@ -15,10 +15,7 @@ use vulkano::pipeline::viewport::Viewport;
 use vulkano::pipeline::GraphicsPipeline;
 use vulkano::pipeline::GraphicsPipelineAbstract;
 use vulkano::swapchain;
-use vulkano::swapchain::AcquireError;
 use vulkano::swapchain::Swapchain;
-use vulkano::sync;
-use vulkano::sync::FlushError;
 use vulkano::sync::GpuFuture;
 
 use winit::Window;
@@ -28,15 +25,10 @@ use super::shaders::*;
 
 use super::Engine;
 
-enum RenderingError {
-    RecreateSwapchain,
-    Ignore,
-}
-
 impl Engine {
     // Rendering loop to be called to update the screen
     pub fn render_loop(&mut self) {
-        let clear_values = vec!([0.0, 0.0, 1.0, 1.0].into());
+        let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
         let (image_num, acquire_future) =
             swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
 
