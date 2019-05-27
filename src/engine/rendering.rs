@@ -37,19 +37,9 @@ impl Engine {
             self.queue.family(),
         )
         .unwrap()
-        // Before we can draw, we have to *enter a render pass*. There are two methods to do
-        // this: `draw_inline` and `draw_secondary`. The latter is a bit more advanced and is
-        // not covered here.
-        //
-        // The third parameter builds the list of values to clear the attachments with. The API
-        // is similar to the list of attachments when building the framebuffers, except that
-        // only the attachments that use `load: Clear` appear in the list.
         .begin_render_pass(self.framebuffers[image_num].clone(), false, clear_values)
         .unwrap();
-        // We are now inside the first subpass of the render pass. We add a draw command.
-        //
-        // The last two parameters contain the list of resources to pass to the shaders.
-        // Since we used an `EmptyPipeline` object, the objects have to be `()`.
+
         for renderable in &self.renderables {
             command_buffer = command_buffer
                 .draw(
@@ -62,13 +52,9 @@ impl Engine {
                 .unwrap();
         }
 
-        // We leave the render pass by calling `draw_end`. Note that if we had multiple
-        // subpasses we could have called `next_inline` (or `next_secondary`) to jump to the
-        // next subpass.
         let command_buffer = command_buffer
             .end_render_pass()
             .unwrap()
-            // Finish building the command buffer by calling `build`.
             .build()
             .unwrap();
 

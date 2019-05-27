@@ -51,6 +51,7 @@ impl Application {
 
 fn main() {
     let mut flyskux = Application::init();
-    flyskux.engine.push_triangle();
+    flyskux.engine.new_triangle([[0.25, 0.25], [0.5, 0.5], [0.25, 0.5]]);
+    flyskux.engine.new_triangle([[-0.25, 0.25], [-0.5, -0.5], [0.25, 0.5]]);
     flyskux.main_loop();
 }
