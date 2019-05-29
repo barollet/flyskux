@@ -9,34 +9,20 @@ mod shaders;
 
 use std::sync::Arc;
 
-use vulkano_win::VkSurfaceBuild;
-use winit::dpi::LogicalSize;
-use winit::{EventsLoop, Window, WindowBuilder};
+use winit::EventsLoop;
 
-use vulkano::command_buffer::DynamicState;
 use vulkano::device::Device;
 use vulkano::device::Queue;
-use vulkano::framebuffer::FramebufferAbstract;
-use vulkano::image::swapchain::SwapchainImage;
 use vulkano::instance::Instance;
 use vulkano::instance::PhysicalDevice;
-use vulkano::pipeline::GraphicsPipelineAbstract;
-use vulkano::swapchain::{PresentMode, SurfaceTransform, Swapchain};
 
 pub use primitives::*;
 use rendering::*;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
-
 pub struct Engine {
     device: Arc<Device>,
-    queue: Arc<Queue>,
-    swapchain: Arc<Swapchain<Window>>,
-    graphical_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
-    dynamic_state: DynamicState,
-    renderables: Vec<Triangle>,
+    pub rendering_system: RenderingSystem,
+    pub renderables: Vec<Triangle>,
 }
 
 impl Engine {
@@ -44,27 +30,10 @@ impl Engine {
     pub fn init(events_loop: &EventsLoop) -> Self {
         let instance = init_instance();
         let (device, queue) = init_device(instance.clone());
-        let (swapchain, images) =
-            init_swapchain(instance.clone(), device.clone(), queue.clone(), events_loop);
-
-        // Initialiazing the render pass
-        let render_pass = init_render_pass(device.clone(), swapchain.clone());
-        let graphical_pipeline = init_graphical_pipeline(device.clone(), render_pass.clone());
-
-        let mut dynamic_state = DynamicState {
-            line_width: None,
-            viewports: None,
-            scissors: None,
-        };
-        let framebuffers = init_framebuffers(&images, render_pass.clone(), &mut dynamic_state);
 
         Self {
+            rendering_system: RenderingSystem::init(instance.clone(), device.clone(), queue.clone(), &events_loop),
             device,
-            queue,
-            swapchain,
-            graphical_pipeline,
-            framebuffers,
-            dynamic_state,
             renderables: vec![],
         }
     }
@@ -110,52 +79,4 @@ fn init_device(instance: Arc<Instance>) -> (Arc<Device>, Arc<Queue>) {
 
     // Returning the first queue of the family
     (device, queues.next().unwrap())
-}
-
-// Initialize the main window with a Vulkan surface and a swapchain to draw on
-fn init_swapchain(
-    instance: Arc<Instance>,
-    device: Arc<Device>,
-    queue: Arc<Queue>,
-    events_loop: &EventsLoop,
-) -> (Arc<Swapchain<Window>>, Vec<Arc<SwapchainImage<Window>>>) {
-    // Instanciating the main window
-    let surface = WindowBuilder::new()
-        .with_dimensions(LogicalSize::new(f64::from(WIDTH), f64::from(HEIGHT)))
-        .with_resizable(false)
-        .build_vk_surface(events_loop, instance.clone())
-        .expect("Failed to create window");
-    let window = surface.window();
-
-    // Swapchain parameters
-    let caps = surface.capabilities(device.physical_device()).unwrap();
-    let usage = caps.supported_usage_flags;
-    let alpha = caps.supported_composite_alpha.iter().next().unwrap();
-    let format = caps.supported_formats[0].0;
-
-    // Set the swapchain dimension to the window size.
-    let initial_dimensions = if let Some(dimensions) = window.get_inner_size() {
-        // convert to physical pixels
-        let dimensions: (u32, u32) = dimensions.to_physical(window.get_hidpi_factor()).into();
-        [dimensions.0, dimensions.1]
-    } else {
-        panic!("Window no longer exists");
-    };
-
-    Swapchain::new(
-        device.clone(),
-        surface.clone(),
-        caps.min_image_count,
-        format,
-        initial_dimensions,
-        1,
-        usage,
-        &queue,
-        SurfaceTransform::Identity,
-        alpha,
-        PresentMode::Fifo,
-        true,
-        None,
-    )
-    .unwrap()
 }

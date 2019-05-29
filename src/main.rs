@@ -31,7 +31,7 @@ impl Application {
         loop {
             let mut done = false;
 
-            self.engine.render_loop();
+            self.engine.rendering_system.render(&self.engine.renderables);
 
             self.events_loop.poll_events(|ev| {
                 if let Event::WindowEvent {
