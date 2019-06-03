@@ -1,13 +1,15 @@
 // Graphical pipeline
 
 // Create the render pass
-use winit::EventsLoop;
+use vulkano::buffer::BufferUsage;
+use vulkano::buffer::CpuAccessibleBuffer;
+use vulkano::command_buffer::AutoCommandBuffer;
 use winit::dpi::LogicalSize;
+use winit::EventsLoop;
 use winit::{Window, WindowBuilder};
 
-
-use vulkano::instance::Instance;
 use std::sync::Arc;
+use vulkano::instance::Instance;
 use vulkano_win::VkSurfaceBuild;
 
 use vulkano::command_buffer::AutoCommandBufferBuilder;
@@ -26,29 +28,77 @@ use vulkano::swapchain;
 use vulkano::swapchain::{PresentMode, SurfaceTransform, Swapchain};
 use vulkano::sync::GpuFuture;
 
-use super::primitives::*;
 use super::shaders::*;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
+#[derive(Debug, Clone)]
+pub struct Vertex {
+    pub position: [f32; 2],
+}
+vulkano::impl_vertex!(Vertex, position);
+
+pub struct Sprite {
+    vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
+    command_buffer: Arc<AutoCommandBuffer>,
+}
+
 pub struct RenderingSystem {
     device: Arc<Device>,
     queue: Arc<Queue>,
     swapchain: Arc<Swapchain<Window>>,
-    graphical_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     dynamic_state: DynamicState,
+    sprites: Vec<Sprite>,
+}
+
+impl Sprite {
+    fn new(
+        queue: Arc<Queue>,
+        pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+        dynamic_state: &DynamicState,
+        vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
+    ) -> Sprite {
+        let command_buffer = Arc::new(
+            AutoCommandBufferBuilder::secondary_graphics(
+                queue.device().clone(),
+                queue.family(),
+                pipeline.clone().subpass(),
+            )
+            .unwrap()
+            .draw(
+                pipeline.clone(),
+                dynamic_state,
+                vec![vertex_buffer.clone()],
+                (),
+                (),
+            )
+            .unwrap()
+            .build()
+            .unwrap(),
+        );
+        Sprite {
+            vertex_buffer,
+            command_buffer,
+        }
+    }
 }
 
 impl RenderingSystem {
-    pub fn init(instance: Arc<Instance>, device: Arc<Device>, queue: Arc<Queue>, events_loop: &EventsLoop) -> RenderingSystem {
+    pub fn init(
+        instance: Arc<Instance>,
+        device: Arc<Device>,
+        queue: Arc<Queue>,
+        events_loop: &EventsLoop,
+    ) -> RenderingSystem {
         let (swapchain, images) =
             init_swapchain(instance.clone(), device.clone(), queue.clone(), events_loop);
 
         // Initialiazing the render pass
         let render_pass = init_render_pass(device.clone(), swapchain.clone());
-        let graphical_pipeline = init_graphical_pipeline(device.clone(), render_pass.clone());
+        let pipeline = init_graphical_pipeline(device.clone(), render_pass.clone());
 
         let mut dynamic_state = DynamicState {
             line_width: None,
@@ -61,10 +111,28 @@ impl RenderingSystem {
             device,
             queue,
             swapchain,
-            graphical_pipeline,
+            pipeline,
             framebuffers,
             dynamic_state,
+            sprites: vec![],
         }
+    }
+
+    pub fn add_sprite_component(&mut self, vertices: &[[f32; 2]]) {
+        let vertex_buffer = CpuAccessibleBuffer::from_iter(
+            self.device.clone(),
+            BufferUsage::all(),
+            vertices.iter().map(|&position| Vertex { position }),
+        )
+        .unwrap();
+        let sprite = Sprite::new(
+            self.queue.clone(),
+            self.pipeline.clone(),
+            &self.dynamic_state,
+            vertex_buffer.clone(),
+        );
+
+        self.sprites.push(sprite);
     }
 }
 
@@ -116,10 +184,9 @@ fn init_swapchain(
     .unwrap()
 }
 
-
 impl RenderingSystem {
     // Rendering loop to be called to update the screen
-    pub fn render(&mut self, renderables: &Vec<Triangle>) {
+    pub fn render(&mut self) {
         let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
         let (image_num, acquire_future) =
             swapchain::acquire_next_image(self.swapchain.clone(), None).unwrap();
@@ -132,23 +199,15 @@ impl RenderingSystem {
         .begin_render_pass(self.framebuffers[image_num].clone(), false, clear_values)
         .unwrap();
 
-        for renderable in renderables {
-            command_buffer = command_buffer
-                .draw(
-                    self.graphical_pipeline.clone(),
-                    &self.dynamic_state,
-                    vec![renderable.vertex_buffer().clone()],
-                    (),
-                    (),
-                )
-                .unwrap();
+        for sprite in &self.sprites {
+            command_buffer = unsafe {
+                command_buffer
+                    .execute_commands(sprite.command_buffer.clone())
+                    .unwrap()
+            }
         }
 
-        let command_buffer = command_buffer
-            .end_render_pass()
-            .unwrap()
-            .build()
-            .unwrap();
+        let command_buffer = command_buffer.end_render_pass().unwrap().build().unwrap();
 
         let future = acquire_future
             .then_execute(self.queue.clone(), command_buffer)

@@ -31,7 +31,7 @@ impl Application {
         loop {
             let mut done = false;
 
-            self.engine.rendering_system.render(&self.engine.renderables);
+            self.engine.rendering_system.render();
 
             self.events_loop.poll_events(|ev| {
                 if let Event::WindowEvent {
@@ -51,7 +51,7 @@ impl Application {
 
 fn main() {
     let mut flyskux = Application::init();
-    flyskux.engine.new_triangle([[0.25, 0.25], [0.5, 0.5], [0.25, 0.5]]);
-    flyskux.engine.new_triangle([[-0.25, 0.25], [-0.5, -0.5], [0.25, 0.5]]);
+    flyskux.engine.rendering_system.add_sprite_component(&[[0.25, 0.25], [0.5, 0.5], [0.25, 0.5], [-0.25, -0.5], [-0.25, 0.25], [-0.5, -0.5]]);
+    flyskux.engine.rendering_system.add_sprite_component(&[[-0.25, 0.25], [-0.5, -0.5], [0.25, 0.5]]);
     flyskux.main_loop();
 }
