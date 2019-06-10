@@ -3,6 +3,9 @@
 // Initialize Vulkan instance, device and swapchain
 // The main window is initialized with the swapchain creation
 
+#[macro_use]
+extern crate vulkano;
+
 pub mod rendering;
 mod shaders;
 
@@ -18,7 +21,6 @@ use vulkano::instance::PhysicalDevice;
 use rendering::*;
 
 pub struct Engine {
-    device: Arc<Device>,
     pub rendering_system: RenderingSystem,
 }
 
@@ -30,7 +32,6 @@ impl Engine {
 
         Self {
             rendering_system: RenderingSystem::init(instance.clone(), device.clone(), queue.clone(), &events_loop),
-            device,
         }
     }
 }

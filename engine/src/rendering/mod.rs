@@ -40,7 +40,7 @@ pub struct Vertex {
 vulkano::impl_vertex!(Vertex, position);
 
 pub struct Sprite {
-    vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
+    //vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
     command_buffer: Arc<AutoCommandBuffer>,
 }
 
@@ -80,7 +80,7 @@ impl Sprite {
             .unwrap(),
         );
         Sprite {
-            vertex_buffer,
+            //vertex_buffer,
             command_buffer,
         }
     }

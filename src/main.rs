@@ -1,9 +1,6 @@
 use winit::{Event, EventsLoop, WindowEvent};
 
-#[macro_use]
-extern crate vulkano;
-
-mod engine;
+extern crate engine;
 mod game;
 
 use engine::Engine;
