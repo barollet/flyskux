@@ -5,7 +5,7 @@ authors = ["theo barollet <theo.barollet@grenoble-inp.org>"]
 edition = "2018"
 
 [dependencies]
-vulkano = "0.12"
-vulkano-shaders = "0.12"
-vulkano-win = "0.12"
+vulkano = "0.13"
+vulkano-shaders = "0.13"
+vulkano-win = "0.13"
 winit = "0.19"

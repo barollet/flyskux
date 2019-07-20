@@ -33,7 +33,7 @@ use super::shaders::*;
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Vertex {
     pub position: [f32; 2],
 }
@@ -199,6 +199,7 @@ impl RenderingSystem {
         .begin_render_pass(self.framebuffers[image_num].clone(), false, clear_values)
         .unwrap();
 
+        // Drawing the sprites
         for sprite in &self.sprites {
             command_buffer = unsafe {
                 command_buffer

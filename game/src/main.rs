@@ -1,7 +1,6 @@
 use winit::{Event, EventsLoop, WindowEvent};
 
 extern crate engine;
-mod game;
 
 use engine::Engine;
 
